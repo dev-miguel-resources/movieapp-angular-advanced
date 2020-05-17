@@ -30,11 +30,91 @@ import {Subject, Subscription} from 'rxjs';
     ])
   ],
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
 
-  constructor() { }
+  // DECLARACIONES
+  public viewCount = 9;
+  public page = 0;
+  public pageSize = 9;
+  public previousPage = 0;
+  public movies = [];
+  public moviesStorage = [];
+  public objectMovie: any;
+  public subscriptionSearchData: Subscription;
+  private componentDestroyed: Subject<boolean> = new Subject();
+  public message = null;
+
+  constructor(
+    private movieService: MovieService,
+    private router: ActivatedRoute
+  ) {
+      this.subscriptionSearchData = this.movieService.observableSearchData$
+        .subscribe(
+          dataSearch => {
+            if(dataSearch) {
+              this.getDataSearch(dataSearch);
+            }
+          });
+   }
 
   ngOnInit() {
+    this.router.params.subscribe(routeParams => {
+      this.getPopular(routeParams.category);
+    });
   }
 
+  ngOnDestroy(): void {
+      this.componentDestroyed.next(true);
+      this.componentDestroyed.complete();
+      this.subscriptionSearchData.unsubscribe();
+  }
+
+
+  public changeViewMovie() {
+    this.movies = [];
+    this.movies = this.moviesStorage.slice(0, this.viewCount);
+  }
+
+  public getPopular(category: string) {
+      this.movies = [];
+      this.movieService.getPopular(category)
+        .pipe(
+          take(1)
+        )
+        .subscribe(
+          res => {
+            this.moviesStorage = res.results;
+            this.movies = res.results.slice(0, this.viewCount);
+            console.log(this.movies);
+          },
+          err => {
+            console.log(err);
+          },
+          () => {
+              //petición finalizada
+          });
+  }
+
+  public getDataSearch(search: string) {
+      this.movies = [];
+      this.movieService.getSearch(search)
+        .pipe(
+          take(1)
+        )
+        .subscribe(
+          res => {
+            if (res.results.length === 0 ) {
+              this.message = 'no existen resultados para tú busqueda';
+            }
+            this.moviesStorage = res.results;
+            this.movies = res.results.slice(0, this.viewCount);
+            console.log(this.movies);
+          },
+          err => {
+            console.log(err);
+          },
+          () => {
+              // petición finalizada
+          });
+  }
 }

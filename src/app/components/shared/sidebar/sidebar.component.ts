@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+//navigate: rutas dinámicas que revisan parámetros
+//navigateByUrl : rutás estáticas
 
 @Component({
   selector: 'app-sidebar',
